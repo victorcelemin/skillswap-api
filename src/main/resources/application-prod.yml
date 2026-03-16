@@ -1,12 +1,11 @@
 # ==================== PERFIL DE PRODUCCION (Railway) ====================
-# Railway inyecta automaticamente JDBC_DATABASE_URL, JDBC_DATABASE_USERNAME,
-# JDBC_DATABASE_PASSWORD cuando se conecta un plugin PostgreSQL.
+# Railway inyecta estas variables cuando se agrega el plugin de PostgreSQL.
 
 spring:
   datasource:
-    url: ${JDBC_DATABASE_URL:${spring.datasource.url}}
-    username: ${JDBC_DATABASE_USERNAME:${spring.datasource.username}}
-    password: ${JDBC_DATABASE_PASSWORD:${spring.datasource.password}}
+    url: ${JDBC_DATABASE_URL}
+    username: ${JDBC_DATABASE_USERNAME}
+    password: ${JDBC_DATABASE_PASSWORD}
     hikari:
       maximum-pool-size: 5
       minimum-idle: 1
@@ -25,7 +24,7 @@ server:
   port: ${PORT:8081}
 
 jwt:
-  secret: ${JWT_SECRET:SkillSwap_Production_Secret_Change_This_In_Railway_Env_Vars_256bits}
+  secret: ${JWT_SECRET:SkillSwap_Railway_Production_JWT_Secret_Key_Must_Be_256_Bits_Long_2024_Secure}
   expiration: 86400000
 
 logging:
