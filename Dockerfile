@@ -1,7 +1,7 @@
 # ==================== STAGE 1: BUILD ====================
-# Usamos la imagen oficial de Maven con Java 21 para compilar
+# Imagen oficial de Maven con Java 21 para compilar el proyecto.
 # https://hub.docker.com/_/maven
-# Build cache bust: 2026-03-16
+# Compatible con: Railway, Render, Fly.io, Google Cloud Run
 FROM maven:3.9.6-eclipse-temurin-21-alpine AS builder
 
 WORKDIR /app
@@ -11,45 +11,49 @@ WORKDIR /app
 COPY pom.xml .
 RUN mvn dependency:go-offline -q
 
-# Copiar el codigo fuente y compilar
+# Copiar el codigo fuente y compilar el JAR
 COPY src ./src
 RUN mvn clean package -DskipTests -q
 
 # ==================== STAGE 2: RUNTIME ====================
-# Imagen minima de JRE (no JDK completo) para reducir el tamano final.
-# eclipse-temurin es la distribucion oficial de OpenJDK recomendada por la comunidad.
+# JRE minimo (no JDK completo) para reducir tamano final de imagen (~200MB vs ~600MB).
+# eclipse-temurin es la distribucion oficial de OpenJDK.
 # https://hub.docker.com/_/eclipse-temurin
 FROM eclipse-temurin:21-jre-alpine
 
-# Metadatos del contenedor
-LABEL maintainer="SkillSwap Team <dev@skillswap.app>"
-LABEL version="1.0.0"
-LABEL description="SkillSwap API - Plataforma de intercambio de habilidades"
+LABEL maintainer="SkillSwap <dev@skillswap.app>"
+LABEL description="SkillSwap API - Spring Boot 3 + Java 21"
 
 WORKDIR /app
 
-# Crear usuario no-root por seguridad (best practice OWASP)
+# Crear usuario no-root por seguridad (OWASP Container Security best practice)
 RUN addgroup -S skillswap && adduser -S skillswap -G skillswap
 
-# Copiar el JAR desde el stage de build
+# Copiar el JAR del stage anterior
 COPY --from=builder /app/target/skillswap-1.0.0-SNAPSHOT.jar app.jar
-
-# Cambiar propietario del directorio
 RUN chown -R skillswap:skillswap /app
 
-# Cambiar al usuario no-root
 USER skillswap
 
-# Puerto expuesto (Railway asigna PORT dinamicamente)
+# Puerto por defecto. Render y Railway sobreescriben con $PORT.
 EXPOSE 8081
 
-# Variables de entorno por defecto (Railway las sobreescribe)
-ENV JAVA_OPTS="-Xms256m -Xmx512m -XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0"
+# JVM tuneada para contenedores con memoria limitada (plan gratuito ~512MB RAM)
+ENV JAVA_OPTS="-Xms128m -Xmx400m -XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0"
 
-# Healthcheck para que Railway/Docker sepa si la app esta sana
-HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-  CMD wget -qO- http://localhost:${PORT:-8081}/api/skills/categories || exit 1
+# Healthcheck: verifica que la app responde antes de marcarla como healthy
+HEALTHCHECK --interval=30s --timeout=10s --start-period=90s --retries=3 \
+  CMD wget -qO- http://localhost:${PORT:-8081}/api/skills/categories > /dev/null || exit 1
 
-# Comando de inicio
-# Usamos exec para que Java sea PID 1 y reciba las senales correctamente
-ENTRYPOINT ["sh", "-c", "exec java $JAVA_OPTS -jar app.jar --server.port=${PORT:-8081}"]
+# ENTRYPOINT con conversion postgresql:// -> jdbc:postgresql://
+# Render inyecta SPRING_DATASOURCE_URL como "postgresql://..." (formato psycopg2).
+# Spring Boot requiere "jdbc:postgresql://..." (formato JDBC).
+# El sed convierte el formato automaticamente en el arranque.
+ENTRYPOINT ["sh", "-c", "\
+  if [ -n \"$SPRING_DATASOURCE_URL\" ]; then \
+    export SPRING_DATASOURCE_URL=$(echo $SPRING_DATASOURCE_URL | sed 's|^postgresql://|jdbc:postgresql://|'); \
+  fi; \
+  exec java $JAVA_OPTS \
+    -jar app.jar \
+    --server.port=${PORT:-8081} \
+"]

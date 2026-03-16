@@ -1,0 +1,59 @@
+# ==================== RENDER BLUEPRINT ====================
+# Documentacion oficial: https://render.com/docs/blueprint-spec
+# Un solo archivo define toda la infraestructura de SkillSwap.
+
+services:
+
+  - type: web
+    name: skillswap-api
+    runtime: docker
+    repo: https://github.com/victorcelemin/skillswap-api
+    branch: master
+    dockerfilePath: ./Dockerfile
+    plan: free
+    region: oregon
+    healthCheckPath: /api/skills/categories
+    envVars:
+
+      # Spring Boot toma SPRING_DATASOURCE_* con maxima precedencia
+      # connectionString de Render devuelve: postgresql://user:pass@host:port/db
+      # Lo convertimos a JDBC con el prefijo jdbc:
+      - key: SPRING_DATASOURCE_URL
+        fromDatabase:
+          name: skillswap-db
+          property: connectionString    # formato: postgresql://...
+          # NOTA: Render devuelve "postgresql://" y Spring Boot necesita
+          # "jdbc:postgresql://". Esto se maneja en el Dockerfile via ENTRYPOINT.
+
+      - key: SPRING_DATASOURCE_USERNAME
+        fromDatabase:
+          name: skillswap-db
+          property: user
+
+      - key: SPRING_DATASOURCE_PASSWORD
+        fromDatabase:
+          name: skillswap-db
+          property: password
+
+      - key: SPRING_PROFILES_ACTIVE
+        value: render
+
+      - key: SPRING_JPA_HIBERNATE_DDL_AUTO
+        value: update
+
+      - key: SPRING_JPA_SHOW_SQL
+        value: "false"
+
+      - key: JWT_SECRET
+        generateValue: true
+
+      - key: JAVA_OPTS
+        value: "-Xms128m -Xmx400m -XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0"
+
+# Render Postgres — definido en seccion separada "databases"
+databases:
+  - name: skillswap-db
+    plan: free
+    region: oregon
+    databaseName: skillswap_db
+    user: skillswap_user
