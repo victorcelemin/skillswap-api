@@ -1,0 +1,65 @@
+version: '3.9'
+
+# SkillSwap — Infraestructura de desarrollo local
+# Basado en documentacion oficial:
+# - PostgreSQL: https://hub.docker.com/_/postgres
+# - pgAdmin: https://hub.docker.com/r/dpage/pgadmin4
+
+services:
+
+  # ==================== BASE DE DATOS ====================
+  postgres:
+    image: postgres:16-alpine
+    container_name: skillswap-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: skillswap_db
+      POSTGRES_USER: skillswap_user
+      POSTGRES_PASSWORD: skillswap_pass
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "5433:5432"    # 5433 en el host -> 5432 en el contenedor (evita conflicto con PostgreSQL nativo)
+    volumes:
+      - skillswap_pgdata:/var/lib/postgresql/data
+      - ./docker/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U skillswap_user -d skillswap_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - skillswap-network
+
+  # ==================== PGADMIN (opcional) ====================
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: skillswap-pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@skillswap.app
+      PGADMIN_DEFAULT_PASSWORD: admin123
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - "5050:80"
+    volumes:
+      - skillswap_pgadmin:/var/lib/pgadmin
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - skillswap-network
+    profiles:
+      - tools
+
+# ==================== VOLÚMENES ====================
+volumes:
+  skillswap_pgdata:
+    driver: local
+  skillswap_pgadmin:
+    driver: local
+
+# ==================== REDES ====================
+networks:
+  skillswap-network:
+    driver: bridge

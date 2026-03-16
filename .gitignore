@@ -1,0 +1,67 @@
+# ==================== MAVEN ====================
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+# ==================== INTELLIJ IDEA ====================
+.idea/
+*.iws
+*.iml
+*.ipr
+
+# ==================== ECLIPSE ====================
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+# ==================== VS CODE ====================
+.vscode/
+!.vscode/extensions.json
+
+# ==================== LOGS ====================
+logs/
+*.log
+*.log.*
+
+# ==================== SPRING BOOT ====================
+spring-shell.log
+
+# ==================== OS ====================
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# ==================== SECRETS / ENV ====================
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets/
+
+# ==================== DOCKER ====================
+# NO ignorar docker-compose.yml (es parte del proyecto)
+# Ignorar overrides locales
+docker-compose.override.yml
+docker-compose.local.yml
+
+# ==================== TESTS ====================
+test_requests/
+*.http.bak
+
+# ==================== BUILD ARTIFACTS ====================
+*.jar
+*.war
+*.ear
+*.class
+
+# ==================== MISC ====================
+*.orig
+HELP.md
