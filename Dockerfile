@@ -1,6 +1,7 @@
 # ==================== STAGE 1: BUILD ====================
 # Usamos la imagen oficial de Maven con Java 21 para compilar
 # https://hub.docker.com/_/maven
+# Build cache bust: 2026-03-16
 FROM maven:3.9.6-eclipse-temurin-21-alpine AS builder
 
 WORKDIR /app
