@@ -57,6 +57,17 @@ jwt:
   refresh-expiration: 604800000  # 7 días en ms
 
 # ==================== WEBSOCKETS ====================
+# ==================== CORS ====================
+# Lista de origenes permitidos separada por comas.
+# En produccion sobreescribir con la variable de entorno CORS_ALLOWED_ORIGINS.
+cors:
+  allowed-origins: >-
+    http://localhost:3000,
+    http://localhost:5173,
+    http://localhost:4200,
+    https://skillswap-frontend-rouge.vercel.app,
+    https://*.vercel.app
+
 websocket:
   allowed-origins: ${WS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:5173}
 

@@ -27,6 +27,11 @@ jwt:
   secret: ${JWT_SECRET:SkillSwap_Railway_Production_JWT_Secret_Key_Must_Be_256_Bits_Long_2024_Secure}
   expiration: 86400000
 
+# CORS: leer los origenes desde variable de entorno Railway.
+# Se puede ampliar sin recompilar añadiendo dominios separados por coma.
+cors:
+  allowed-origins: ${CORS_ALLOWED_ORIGINS:https://skillswap-frontend-rouge.vercel.app,https://*.vercel.app,http://localhost:3000}
+
 logging:
   level:
     com.skillswap: INFO
